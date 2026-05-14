@@ -36,7 +36,7 @@ st.markdown(
     }}
 
     .titulo-dashboard {{
-        color: #2E4F50;
+        color: white;
         font-size: 42px;
         font-weight: bold;
         text-align: center;
@@ -45,9 +45,11 @@ st.markdown(
 
     .grafico-container {{
         background-color: rgba(49, 81, 82, 0.78);
-        padding: 30px;
-        border-radius: 30px;
+        padding: 35px;
+        border-radius: 35px;
         margin-top: 20px;
+        backdrop-filter: blur(6px);
+
     }}
 
     .insight-container {{
