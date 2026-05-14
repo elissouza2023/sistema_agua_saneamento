@@ -125,11 +125,6 @@ Contribuições são bem-vindas! Para contribuir:
 Desenvolvido por **[@elissouza2023](https://github.com/elissouza2023)**
 ---
 
-## 🛠️ Deploy
-
-Link do Deploy:  **https://sistemaaguasaneamento.streamlit.app/**
-
----
 
 ## 📄 Licença
 
