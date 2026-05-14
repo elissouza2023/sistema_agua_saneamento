@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# CSS MELHORADO
+# CSS MELHORADO - FOCO NOS KPIs
 # =========================================================
 st.markdown("""
 <style>
@@ -33,7 +33,7 @@ st.markdown("""
     }
 
     section[data-testid="stSidebar"] {
-        background-color: rgba(57, 91, 94, 0.85) !important;
+        background-color: rgba(57, 91, 94, 0.90) !important;
     }
     section[data-testid="stSidebar"] * {
         color: white !important;
@@ -44,13 +44,24 @@ st.markdown("""
         font-size: 42px;
         font-weight: bold;
         text-align: center;
-        text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
         margin-top: 0;
         padding-top: 10px;
     }
 
+    .kpi-container {
+        background-color: rgba(49, 81, 82, 0.95) !important;
+        padding: 30px 20px 25px 20px;
+        border-radius: 20px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
     .grafico-container {
-        background-color: rgba(49, 81, 82, 0.88);
+        background-color: rgba(49, 81, 82, 0.92);
         padding: 25px;
         border-radius: 20px;
         margin-top: 15px;
@@ -59,18 +70,8 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
-    .kpi-container {
-        background-color: rgba(49, 81, 82, 0.88);
-        padding: 25px 20px;
-        border-radius: 20px;
-        margin-top: 15px;
-        margin-bottom: 10px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-
     .insight-container {
-        background-color: rgba(49, 81, 82, 0.85);
+        background-color: rgba(49, 81, 82, 0.92);
         border-left: 8px solid #6499B9;
         padding: 20px;
         border-radius: 20px;
@@ -90,9 +91,10 @@ st.markdown("""
     }
 
     [data-testid="metric-container"] {
-        background-color: rgba(255,255,255,0.95);
+        background-color: rgba(255,255,255,0.98) !important;
         border-radius: 18px;
         padding: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     header[data-testid="stHeader"] {
@@ -200,7 +202,7 @@ with col2:
     """, unsafe_allow_html=True)
 
 # =========================================================
-# VISÃO GERAL - KPI CONTAINER CORRIGIDO
+# VISÃO GERAL
 # =========================================================
 if pagina == "🏠 Visão Geral":
     receita_acumulada = df['RECEITA_ACUMULADA'].sum()
@@ -209,7 +211,6 @@ if pagina == "🏠 Visão Geral":
     hidrometros_criticos = (df['STATUS_HIDROMETRO'] == 'SUBSTITUICAO RECOMENDADA').sum()
     receita_potencial = df['RECEITA_POTENCIAL'].sum()
 
-    # Container específico para os KPIs
     with st.container():
         st.markdown('<div class="kpi-container">', unsafe_allow_html=True)
         
@@ -234,11 +235,10 @@ if pagina == "🏠 Visão Geral":
     """, unsafe_allow_html=True)
 
 # =========================================================
-# OUTRAS PÁGINAS (mantidas iguais)
+# OUTRAS PÁGINAS
 # =========================================================
 elif pagina == "💰 Perdas Comerciais":
-    fig = px.histogram(df, x='RECEITA_ACUMULADA', nbins=50,
-                       title='Distribuição da Receita Acumulada', template='plotly_white')
+    fig = px.histogram(df, x='RECEITA_ACUMULADA', nbins=50, title='Distribuição da Receita Acumulada', template='plotly_white')
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
