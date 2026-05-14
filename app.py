@@ -82,19 +82,19 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.20);
     }
 
-    /* Rótulo da métrica — seletores máximos para sobrescrever o tema Streamlit */
-    [data-testid="metric-container"] [data-testid="stMetricLabel"],
-    [data-testid="metric-container"] [data-testid="stMetricLabel"] *,
-    [data-testid="metric-container"] [data-testid="stMetricLabel"] p,
-    [data-testid="metric-container"] [data-testid="stMetricLabel"] span,
-    [data-testid="metric-container"] [data-testid="stMetricLabel"] div,
-    [data-testid="metric-container"] [data-testid="stMetricLabel"] label {
+    /* Rótulo da métrica — sobrescreve o alpha baixo que o tema Streamlit aplica */
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricLabel"] > div,
+    [data-testid="stMetricLabel"] > div > p,
+    [data-testid="stMetricLabel"] p,
+    [data-testid="stMetricLabel"] span {
         color: #ffffff !important;
         opacity: 1 !important;
-        visibility: visible !important;
-        text-shadow: 1px 1px 5px rgba(0,0,0,0.6);
-        font-weight: 600 !important;
+        filter: none !important;
+        -webkit-text-fill-color: #ffffff !important;
+        font-weight: 700 !important;
         font-size: 13px !important;
+        text-shadow: 0px 0px 6px rgba(0,0,0,1), 1px 1px 3px rgba(0,0,0,1) !important;
     }
 
     /* Valor principal da métrica — branco com sombra */
