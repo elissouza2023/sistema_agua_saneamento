@@ -1,246 +1,521 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go
-from pathlib import Path
-import base64
 
-# ======================================================
+# =========================================================
 # CONFIGURAÇÃO DA PÁGINA
-# ======================================================
+# =========================================================
+
 st.set_page_config(
-    page_title="Dashboard Mercado Siderúrgico Brasileiro",
+    page_title="Sistema Comercial de Água e Esgoto",
     layout="wide"
 )
 
-# ======================================================
-# BACKGROUND + CSS (ESTÁVEL E SEGURO)
-# ======================================================
-def set_background(image_path: Path):
-    if not image_path.exists():
-        return
-    with open(image_path, "rb") as f:
-        encoded = base64.b64encode(f.read()).decode()
+# =========================================================
+# ESTILO CSS
+# =========================================================
 
+st.markdown(
+    f"""
+    <style>
+
+    .stApp {{
+        background-image: url("https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/assets/fundo.png");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }}
+
+    section[data-testid="stSidebar"] {{
+        background-color: rgba(57, 91, 94, 0.60);
+    }}
+
+    section[data-testid="stSidebar"] * {{
+        color: white !important;
+    }}
+
+    .titulo-dashboard {{
+        color: #2E4F50;
+        font-size: 42px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: -20px;
+    }}
+
+    .grafico-container {{
+        background-color: rgba(49, 81, 82, 0.78);
+        padding: 30px;
+        border-radius: 30px;
+        margin-top: 20px;
+    }}
+
+    .insight-container {{
+        background-color: rgba(49, 81, 82, 0.78);
+        border-left: 8px solid #6499B9;
+        padding: 20px;
+        border-radius: 20px;
+        color: white;
+        font-size: 16px;
+        margin-top: 25px;
+    }}
+
+    .rodape {{
+        background-color: #395B5E;
+        color: #FFFFFF;
+        text-align: center;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 30px;
+        font-size: 14px;
+    }}
+
+    .kpi-box {{
+        background-color: white;
+        padding: 20px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+    }}
+
+    .kpi-title {{
+        font-size: 18px;
+        color: #395B5E;
+        font-weight: bold;
+    }}
+
+    .kpi-value {{
+        font-size: 30px;
+        color: #2E4F50;
+        font-weight: bold;
+    }}
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# =========================================================
+# CARREGAMENTO DOS DADOS
+# =========================================================
+
+@st.cache_data
+def carregar_dados():
+
+    url = "https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/data/dados_micromedicao.xls"
+
+    df = pd.read_excel(url)
+
+    # PADRONIZAÇÃO
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.upper()
+        .str.replace(' ', '_')
+        .str.replace('.', '')
+        .str.replace('/', '_')
+        .str.replace('Ç', 'C')
+        .str.replace('Ã', 'A')
+        .str.replace('Á', 'A')
+    )
+
+    # LIMPEZA
+    df = df[df['SIT_LIG_AGUA'].notna()]
+
+    colunas_numericas = df.select_dtypes(
+        include=['float64', 'int64']
+    ).columns
+
+    df[colunas_numericas] = (
+        df[colunas_numericas]
+        .fillna(0)
+    )
+
+    df['CATEGORIA_PRINCIPAL'] = (
+        df['CATEGORIA_PRINCIPAL']
+        .fillna('NAO INFORMADO')
+    )
+
+    df['DATA_INSTALACAO_HIDROMETRO'] = pd.to_datetime(
+        df['DATA_INSTALACAO_HIDROMETRO'],
+        errors='coerce'
+    )
+
+    # ENGENHARIA DE ATRIBUTOS
+
+    colunas_consumo = [
+        col for col in df.columns
+        if 'VOLUME_FATURADO_' in col
+    ]
+
+    colunas_receita = [
+        col for col in df.columns
+        if 'VALOR_TOTAL_' in col
+    ]
+
+    df['CONSUMO_ACUMULADO'] = (
+        df[colunas_consumo]
+        .sum(axis=1)
+    )
+
+    df['RECEITA_ACUMULADA'] = (
+        df[colunas_receita]
+        .sum(axis=1)
+    )
+
+    df['CONSUMO_MEDIO'] = (
+        df[colunas_consumo]
+        .mean(axis=1)
+    )
+
+    df['RECEITA_MEDIA'] = (
+        df[colunas_receita]
+        .mean(axis=1)
+    )
+
+    df['IDADE_HIDROMETRO'] = (
+        pd.Timestamp.today().year -
+        df['DATA_INSTALACAO_HIDROMETRO'].dt.year
+    )
+
+    # TICKET MEDIO
+
+    df['TICKET_MEDIO_M3'] = np.where(
+        df['CONSUMO_ACUMULADO'] > 0,
+        df['RECEITA_ACUMULADA'] /
+        df['CONSUMO_ACUMULADO'],
+        0
+    )
+
+    # TARIFA MEDIA
+
+    tarifa_media = (
+        df['RECEITA_ACUMULADA'].sum() /
+        df['CONSUMO_ACUMULADO'].sum()
+    )
+
+    # RECEITA POTENCIAL
+
+    df['RECEITA_POTENCIAL'] = (
+        df['CONSUMO_ACUMULADO'] *
+        tarifa_media
+    )
+
+    # PERDA ESTIMADA
+
+    df['PERDA_ESTIMADA'] = (
+        df['RECEITA_POTENCIAL'] -
+        df['RECEITA_ACUMULADA']
+    )
+
+    # FLAG SUSPEITA
+
+    df['FLAG_SUSPEITA'] = np.where(
+        (
+            df['CONSUMO_ACUMULADO'] >
+            df['CONSUMO_ACUMULADO'].quantile(0.75)
+        ) &
+        (
+            df['TICKET_MEDIO_M3'] <
+            df['TICKET_MEDIO_M3'].quantile(0.25)
+        ),
+        'SUSPEITO',
+        'NORMAL'
+    )
+
+    # STATUS HIDROMETRO
+
+    df['STATUS_HIDROMETRO'] = np.where(
+        df['IDADE_HIDROMETRO'] < 5,
+        'DENTRO DA VIDA UTIL',
+        np.where(
+            df['IDADE_HIDROMETRO'] < 7,
+            'PROXIMO DO VENCIMENTO',
+            'SUBSTITUICAO RECOMENDADA'
+        )
+    )
+
+    return df
+
+df = carregar_dados()
+
+# =========================================================
+# SIDEBAR
+# =========================================================
+
+st.sidebar.markdown("## Menu")
+
+pagina = st.sidebar.radio(
+    "",
+    [
+        "🏠 Visão Geral",
+        "💰 Perdas Comerciais",
+        "🚨 Anomalias",
+        "💧 Parque de Hidrômetros",
+        "📈 Recomendações"
+    ]
+)
+
+# =========================================================
+# HEADER
+# =========================================================
+
+col1, col2 = st.columns([1, 10])
+
+with col1:
+    st.image(
+        "https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/assets/icone.png",
+        width=80
+    )
+
+with col2:
     st.markdown(
-        f"""
-        <style>
-            /* Fundo da Aplicação */
-            .stApp {{
-                background-image: url(data:image/jpg;base64,{encoded});
-                background-size: cover;
-                background-repeat: no-repeat;
-                background-attachment: fixed;
-            }}
-
-            /* Camada de escurecimento para contraste */
-            .stApp::before {{
-                content: "";
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.6);
-                z-index: -1;
-            }}
-
-            /* Leitura de textos e títulos */
-            h1, h2, h3, p, label {{
-                color: white !important;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            }}
-
-            /* Estilização da Sidebar (Filtros) */
-            section[data-testid="stSidebar"] {{
-                background-color: rgba(0, 0, 0, 0.4);
-                backdrop-filter: blur(10px);
-            }}
-
-            /* Cor dos botões/tags de filtro (#e09e50) */
-            span[data-baseweb="tag"] {{
-                background-color: #e09e50 !important;
-                color: white !important;
-            }}
-
-            /* Estilização dos KPIs */
-            [data-testid="stMetricValue"] {{
-                font-size: 1.8rem !important;
-                color: white !important;
-                text-shadow: 1px 1px 2px black;
-            }}
-            [data-testid="stMetricLabel"] {{
-                color: #e09e50 !important;
-                font-weight: bold !important;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }}
-            div[data-testid="stMetric"] {{
-                background: rgba(255, 255, 255, 0.05);
-                backdrop-filter: blur(10px);
-                border-left: 5px solid #b74803;
-                padding: 15px;
-                border-radius: 10px;
-            }}
-
-            /* Ajuste das Abas */
-            .stTabs [data-baseweb="tab"] p {{
-                color: white !important;
-                font-weight: bold;
-                font-size: 16px;
-            }}
-            
-            /* Rodapé customizado */
-            .custom-footer {{
-                background-color: rgba(0, 0, 0, 0.75);
-                padding: 15px;
-                border-radius: 10px;
-                text-align: center;
-                margin-top: 30px;
-                border: 1px solid rgba(255,255,255,0.1);
-            }}
-        </style>
+        """
+        <div class="titulo-dashboard">
+        Dashboard Sistema Comercial de Água e Esgoto
+        </div>
         """,
         unsafe_allow_html=True
     )
 
-BASE_DIR = Path(__file__).resolve().parent
-set_background(BASE_DIR / "assets" / "fundo.jpg")
+# =========================================================
+# VISÃO GERAL
+# =========================================================
 
-# ======================================================
-# ESTILO PADRÃO DOS GRÁFICOS (ALTO CONTRASTE)
-# ======================================================
-def apply_plotly_layout(fig):
-    fig.update_layout(
-        autosize=True,
-        margin=dict(l=60, r=60, t=50, b=60),
-        paper_bgcolor="rgba(30, 30, 30, 0.7)", 
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="white", size=13),
-        legend=dict(
-            bgcolor="rgba(0,0,0,0.6)",
-            font=dict(color="white", size=11),
-            bordercolor="rgba(255,255,255,0.2)",
-            borderwidth=1
-        ),
-        xaxis=dict(
-            gridcolor="rgba(255,255,255,0.1)",
-            tickfont=dict(color="white", size=12)
-        ),
-        yaxis=dict(
-            gridcolor="rgba(255,255,255,0.1)",
-            tickfont=dict(color="white", size=12)
+if pagina == "🏠 Visão Geral":
+
+    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
+
+    receita_acumulada = df['RECEITA_ACUMULADA'].sum()
+    perda_estimada = df['PERDA_ESTIMADA'].clip(lower=0).sum()
+    ligacoes_suspeitas = (
+        df['FLAG_SUSPEITA'] == 'SUSPEITO'
+    ).sum()
+
+    hidrometros_criticos = (
+        df['STATUS_HIDROMETRO'] ==
+        'SUBSTITUICAO RECOMENDADA'
+    ).sum()
+
+    receita_potencial = df['RECEITA_POTENCIAL'].sum()
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+
+    with c1:
+        st.metric(
+            "Receita Acumulada",
+            f"R$ {receita_acumulada:,.2f}"
         )
+
+    with c2:
+        st.metric(
+            "Perda Estimada",
+            f"R$ {perda_estimada:,.2f}"
+        )
+
+    with c3:
+        st.metric(
+            "Ligações Suspeitas",
+            f"{ligacoes_suspeitas}"
+        )
+
+    with c4:
+        st.metric(
+            "Hidrômetros Críticos",
+            f"{hidrometros_criticos}"
+        )
+
+    with c5:
+        st.metric(
+            "Receita Potencial",
+            f"R$ {receita_potencial:,.2f}"
+        )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        <div class="insight-container">
+        Visão Geral de KPIs estratégicos visando identificação de oportunidades de recuperação de receitas e detecção de fraudes e inconsistências.
+        </div>
+        """,
+        unsafe_allow_html=True
     )
-    return fig
 
-# ======================================================
-# CARREGAMENTO DOS DADOS
-# ======================================================
-@st.cache_data
-def load_data():
-    data_path = BASE_DIR / "data" / "processed" / "dados_siderurgia_limpos_2013_2025.csv"
-    if not data_path.exists():
-        st.error(f"Arquivo não encontrado: {data_path}")
-        st.stop()
-    df = pd.read_csv(data_path)
-    df["date"] = pd.to_datetime(df["date"])
-    return df
+# =========================================================
+# PERDAS COMERCIAIS
+# =========================================================
 
-df = load_data()
+elif pagina == "💰 Perdas Comerciais":
 
-# ======================================================
-# TÍTULO E FILTROS
-# ======================================================
-st.title("📊 Dashboard Mercado Siderúrgico Brasileiro")
-st.markdown("Explore vendas internas, exportações, importações e consumo aparente.")
+    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
 
-# SIDEBAR
-st.sidebar.header("Filtros de Análise")
-anos = sorted(df["date"].dt.year.unique())
-anos_sel = st.sidebar.multiselect(
-    "Selecione os anos:",
-    options=anos,
-    default=anos[-3:] if len(anos) >= 3 else anos
-)
-
-df_f = df[df["date"].dt.year.isin(anos_sel)] if anos_sel else df.copy()
-
-# ======================================================
-# SEÇÃO DE KPIs
-# ======================================================
-if not df_f.empty:
-    total_vendas = df_f["vendas_internas"].sum()
-    total_export = df_f["exportacoes_volume"].sum()
-    consumo_medio = df_f["consumo_aparente"].mean()
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Total Vendas Internas", f"{total_vendas:,.0f} mil t".replace(",", "."))
-    with col2:
-        st.metric("Total Exportações", f"{total_export:,.0f} mil t".replace(",", "."))
-    with col3:
-        st.metric("Média Consumo Aparente", f"{consumo_medio:,.0f} mil t".replace(",", "."))
-
-st.markdown("---")
-
-# ======================================================
-# ESTRUTURA DE ABAS E GRÁFICOS
-# ======================================================
-tab1, tab2, tab3 = st.tabs([
-    "📦 Vendas vs Exportações",
-    "🚢 Fluxo Import/Export",
-    "📈 Consumo Aparente"
-])
-
-with tab1:
-    st.subheader("Volume de Vendas Internas e Exportações")
-    melt1 = df_f.melt(
-        id_vars="date",
-        value_vars=["vendas_internas", "exportacoes_volume"],
-        var_name="Indicador", value_name="Volume (mil t)"
+    fig = px.histogram(
+        df,
+        x='RECEITA_ACUMULADA',
+        nbins=50,
+        title='Distribuição da Receita Acumulada',
+        template='plotly_white'
     )
-    fig1 = px.bar(
-        melt1, x="date", y="Volume (mil t)",
-        color="Indicador", barmode="group",
-        color_discrete_map={"vendas_internas": "#e09e50", "exportacoes_volume": "#b74803"}
-    )
-    st.plotly_chart(apply_plotly_layout(fig1), use_container_width=True)
 
-with tab2:
-    st.subheader("Comparativo de Comércio Exterior")
-    melt2 = df_f.melt(
-        id_vars="date",
-        value_vars=["exportacoes_volume", "importacoes_volume"],
-        var_name="Indicador", value_name="Volume (mil t)"
+    st.plotly_chart(
+        fig,
+        use_container_width=True
     )
-    fig2 = px.bar(
-        melt2, x="date", y="Volume (mil t)",
-        color="Indicador", barmode="group",
-        color_discrete_sequence=["#b74803", "#7ca8cc"]
-    )
-    st.plotly_chart(apply_plotly_layout(fig2), use_container_width=True)
 
-with tab3:
-    st.subheader("Evolução do Consumo Aparente")
-    melt3 = df_f.melt(
-        id_vars="date",
-        value_vars=["consumo_aparente", "vendas_internas"],
-        var_name="Indicador", value_name="Volume (mil t)"
-    )
-    fig3 = px.line(
-        melt3, x="date", y="Volume (mil t)", color="Indicador",
-        color_discrete_map={"consumo_aparente": "#ffffff", "vendas_internas": "#e09e50"}
-    )
-    st.plotly_chart(apply_plotly_layout(fig3), use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ======================================================
+    st.markdown(
+        """
+        <div class="insight-container">
+        Os dados indicam crescimento progressivo da perda estimada em hidrômetros próximos ou acima da vida útil recomendada, sugerindo que a substituição preventiva possui potencial de retorno financeiro superior ao custo operacional da troca.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# =========================================================
+# ANOMALIAS
+# =========================================================
+
+elif pagina == "🚨 Anomalias":
+
+    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
+
+    fig = px.scatter(
+        df,
+        x='CONSUMO_ACUMULADO',
+        y='RECEITA_ACUMULADA',
+        color='FLAG_SUSPEITA',
+        template='plotly_white',
+        title='Detecção de Comportamentos Atípicos'
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        <div class="insight-container">
+        Ligações com comportamento atípico e potencial necessidade de análise comercial.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# =========================================================
+# PARQUE HIDROMETROS
+# =========================================================
+
+elif pagina == "💧 Parque de Hidrômetros":
+
+    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
+
+    status_hidrometro = (
+        df['STATUS_HIDROMETRO']
+        .value_counts()
+        .reset_index()
+    )
+
+    status_hidrometro.columns = [
+        'STATUS',
+        'QUANTIDADE'
+    ]
+
+    fig = px.bar(
+        status_hidrometro,
+        x='STATUS',
+        y='QUANTIDADE',
+        color='STATUS',
+        text='QUANTIDADE',
+        title='Situação Operacional dos Hidrômetros',
+        template='plotly_white',
+        color_discrete_map={
+            'DENTRO DA VIDA UTIL': 'green',
+            'PROXIMO DO VENCIMENTO': 'yellow',
+            'SUBSTITUICAO RECOMENDADA': 'red'
+        }
+    )
+
+    fig.update_traces(
+        textposition='outside'
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        <div class="insight-container">
+        Foi identificado percentual relevante de hidrômetros acima da vida útil recomendada pela Portaria 155/2022, indicando potencial risco de submedição e perdas comerciais.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# =========================================================
+# RECOMENDACOES
+# =========================================================
+
+elif pagina == "📈 Recomendações":
+
+    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
+
+    dados_linha = (
+        df.groupby(
+            ['IDADE_HIDROMETRO', 'STATUS_HIDROMETRO']
+        )['PERDA_ESTIMADA']
+        .sum()
+        .reset_index()
+    )
+
+    fig = px.line(
+        dados_linha,
+        x='IDADE_HIDROMETRO',
+        y='PERDA_ESTIMADA',
+        color='STATUS_HIDROMETRO',
+        markers=True,
+        title='Perdas Comerciais Associadas ao Envelhecimento dos Hidrômetros',
+        template='plotly_white',
+        color_discrete_map={
+            'DENTRO DA VIDA UTIL': 'green',
+            'PROXIMO DO VENCIMENTO': 'yellow',
+            'SUBSTITUICAO RECOMENDADA': 'red'
+        }
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        <div class="insight-container">
+        Com base nas análises realizadas, foram identificadas oportunidades relevantes de recuperação de receita associadas principalmente ao envelhecimento do parque de hidrômetros, inconsistências entre consumo e faturamento e padrões atípicos de comportamento comercial. Os dados indicam que hidrômetros com idade superior à vida útil recomendada apresentam maior potencial de submedição e perdas financeiras, reforçando a necessidade de substituição preventiva e priorização operacional. Também foram identificadas ligações com elevado consumo acumulado e baixo ticket médio por metro cúbico, sinalizando possíveis inconsistências cadastrais, falhas de medição ou necessidade de inspeção comercial. Recomenda-se como ações prioritárias a substituição gradual dos hidrômetros críticos, a intensificação das fiscalizações em ligações classificadas como suspeitas e a implementação de monitoramento contínuo dos indicadores estratégicos apresentados no dashboard. As medidas propostas possuem potencial de aumento de faturamento, mitigação de perdas comerciais e melhoria da eficiência operacional, contribuindo diretamente para a sustentabilidade financeira da operação de saneamento.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# =========================================================
 # RODAPÉ
-# ======================================================
+# =========================================================
+
 st.markdown(
     """
-    <div class="custom-footer">
-        <p style="margin:0; font-size: 1rem;">
-            <strong>Elisângela de Souza</strong> | Dados atualizados até Fev/2026 |  Fonte oficial: Instituto Aço Brasil
-        </p>
+    <div class="rodape">
+    @ Elisângela de Souza | Sistema Comercial de Água e Esgoto | 2026
     </div>
     """,
     unsafe_allow_html=True
