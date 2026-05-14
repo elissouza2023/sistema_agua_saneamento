@@ -286,10 +286,23 @@ with col2:
 
 if pagina == "🏠 Visão Geral":
 
-    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
+    with st.container():
+
+    st.markdown(
+        """
+        <div class="grafico-container">
+        """,
+        unsafe_allow_html=True
+    )
 
     receita_acumulada = df['RECEITA_ACUMULADA'].sum()
-    perda_estimada = df['PERDA_ESTIMADA'].clip(lower=0).sum()
+
+    perda_estimada = (
+        df['PERDA_ESTIMADA']
+        .clip(lower=0)
+        .sum()
+    )
+
     ligacoes_suspeitas = (
         df['FLAG_SUSPEITA'] == 'SUSPEITO'
     ).sum()
@@ -299,7 +312,10 @@ if pagina == "🏠 Visão Geral":
         'SUBSTITUICAO RECOMENDADA'
     ).sum()
 
-    receita_potencial = df['RECEITA_POTENCIAL'].sum()
+    receita_potencial = (
+        df['RECEITA_POTENCIAL']
+        .sum()
+    )
 
     c1, c2, c3, c4, c5 = st.columns(5)
 
@@ -333,7 +349,12 @@ if pagina == "🏠 Visão Geral":
             f"R$ {receita_potencial:,.2f}"
         )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.markdown(
         """
