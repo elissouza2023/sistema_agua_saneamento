@@ -6,97 +6,99 @@ import plotly.express as px
 # =========================================================
 # CONFIGURAÇÃO DA PÁGINA
 # =========================================================
-
 st.set_page_config(
     page_title="Sistema Comercial de Água e Esgoto",
-    layout="wide"
+    layout="wide",
+    page_icon="💧"
 )
 
 # =========================================================
-# CSS
+# CSS MELHORADO
 # =========================================================
-
 st.markdown("""
 <style>
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 
-.block-container {
-    padding-top: 1rem;
-}
+    .stApp {
+        background-image: url("https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/assets/fundo.png");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+    }
 
-.stApp {
-    background-image: url("https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/assets/fundo.png");
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-}
+    section[data-testid="stSidebar"] {
+        background-color: rgba(57, 91, 94, 0.85) !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
 
-section[data-testid="stSidebar"] {
-    background-color: rgba(57, 91, 94, 0.60);
-}
+    .titulo-dashboard {
+        color: white;
+        font-size: 42px;
+        font-weight: bold;
+        text-align: center;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        margin-top: 0;
+        padding-top: 10px;
+    }
 
-section[data-testid="stSidebar"] * {
-    color: white !important;
-}
+    .grafico-container {
+        background-color: rgba(49, 81, 82, 0.85);
+        padding: 25px;
+        border-radius: 20px;
+        margin-top: 25px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
 
-.titulo-dashboard {
-    color: white;
-    font-size: 42px;
-    font-weight: bold;
-    text-align: center;
-    margin-top: -10px;
-}
+    .insight-container {
+        background-color: rgba(49, 81, 82, 0.85);
+        border-left: 8px solid #6499B9;
+        padding: 20px;
+        border-radius: 20px;
+        color: white;
+        font-size: 16px;
+        margin-top: 20px;
+    }
 
-.grafico-container {
-    background-color: rgba(49, 81, 82, 0.78);
-    padding: 30px;
-    border-radius: 30px;
-    margin-top: 20px;
-    backdrop-filter: blur(6px);
-}
+    .rodape {
+        background-color: #395B5E;
+        color: white;
+        text-align: center;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 40px;
+        font-size: 14px;
+    }
 
-.insight-container {
-    background-color: rgba(49, 81, 82, 0.78);
-    border-left: 8px solid #6499B9;
-    padding: 20px;
-    border-radius: 20px;
-    color: white;
-    font-size: 16px;
-    margin-top: 25px;
-}
+    [data-testid="metric-container"] {
+        background-color: rgba(255,255,255,0.95);
+        border-radius: 18px;
+        padding: 15px;
+    }
 
-.rodape {
-    background-color: #395B5E;
-    color: white;
-    text-align: center;
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 30px;
-    font-size: 14px;
-}
-
-[data-testid="metric-container"] {
-    background-color: rgba(255,255,255,0.92);
-    border-radius: 18px;
-    padding: 15px;
-    border: none;
-}
-
+    header[data-testid="stHeader"] {
+        background-color: rgba(0,0,0,0.1) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================================================
 # CARREGAMENTO DOS DADOS
 # =========================================================
-
 @st.cache_data
 def carregar_dados():
-
     url = "https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/data/dados_micromedicao.xls"
-
     df = pd.read_excel(url)
-
+    
     # PADRONIZAÇÃO
-
     df.columns = (
         df.columns
         .str.strip()
@@ -108,124 +110,54 @@ def carregar_dados():
         .str.replace('Ã', 'A')
         .str.replace('Á', 'A')
     )
-
+    
     # LIMPEZA
-
     df = df[df['SIT_LIG_AGUA'].notna()]
-
-    colunas_numericas = df.select_dtypes(
-        include=['float64', 'int64']
-    ).columns
-
-    df[colunas_numericas] = (
-        df[colunas_numericas]
-        .fillna(0)
-    )
-
-    df['CATEGORIA_PRINCIPAL'] = (
-        df['CATEGORIA_PRINCIPAL']
-        .fillna('NAO INFORMADO')
-    )
-
+    colunas_numericas = df.select_dtypes(include=['float64', 'int64']).columns
+    df[colunas_numericas] = df[colunas_numericas].fillna(0)
+    df['CATEGORIA_PRINCIPAL'] = df['CATEGORIA_PRINCIPAL'].fillna('NAO INFORMADO')
+    
     df['DATA_INSTALACAO_HIDROMETRO'] = pd.to_datetime(
-        df['DATA_INSTALACAO_HIDROMETRO'],
-        errors='coerce'
+        df['DATA_INSTALACAO_HIDROMETRO'], errors='coerce'
     )
-
+    
     # ENGENHARIA DE ATRIBUTOS
-
-    colunas_consumo = [
-        col for col in df.columns
-        if 'VOLUME_FATURADO_' in col
-    ]
-
-    colunas_receita = [
-        col for col in df.columns
-        if 'VALOR_TOTAL_' in col
-    ]
-
-    df['CONSUMO_ACUMULADO'] = (
-        df[colunas_consumo]
-        .sum(axis=1)
-    )
-
-    df['RECEITA_ACUMULADA'] = (
-        df[colunas_receita]
-        .sum(axis=1)
-    )
-
-    df['CONSUMO_MEDIO'] = (
-        df[colunas_consumo]
-        .mean(axis=1)
-    )
-
-    df['RECEITA_MEDIA'] = (
-        df[colunas_receita]
-        .mean(axis=1)
-    )
-
+    colunas_consumo = [col for col in df.columns if 'VOLUME_FATURADO_' in col]
+    colunas_receita = [col for col in df.columns if 'VALOR_TOTAL_' in col]
+    
+    df['CONSUMO_ACUMULADO'] = df[colunas_consumo].sum(axis=1)
+    df['RECEITA_ACUMULADA'] = df[colunas_receita].sum(axis=1)
+    df['CONSUMO_MEDIO'] = df[colunas_consumo].mean(axis=1)
+    df['RECEITA_MEDIA'] = df[colunas_receita].mean(axis=1)
+    
     df['IDADE_HIDROMETRO'] = (
-        pd.Timestamp.today().year -
+        pd.Timestamp.today().year - 
         df['DATA_INSTALACAO_HIDROMETRO'].dt.year
     )
-
-    # TICKET MÉDIO
-
+    
     df['TICKET_MEDIO_M3'] = np.where(
         df['CONSUMO_ACUMULADO'] > 0,
-        df['RECEITA_ACUMULADA'] /
-        df['CONSUMO_ACUMULADO'],
+        df['RECEITA_ACUMULADA'] / df['CONSUMO_ACUMULADO'],
         0
     )
-
-    # TARIFA MÉDIA
-
-    tarifa_media = (
-        df['RECEITA_ACUMULADA'].sum() /
-        df['CONSUMO_ACUMULADO'].sum()
-    )
-
-    # RECEITA POTENCIAL
-
-    df['RECEITA_POTENCIAL'] = (
-        df['CONSUMO_ACUMULADO'] *
-        tarifa_media
-    )
-
-    # PERDA ESTIMADA
-
-    df['PERDA_ESTIMADA'] = (
-        df['RECEITA_POTENCIAL'] -
-        df['RECEITA_ACUMULADA']
-    )
-
-    # FLAG SUSPEITA
-
+    
+    tarifa_media = df['RECEITA_ACUMULADA'].sum() / df['CONSUMO_ACUMULADO'].sum()
+    
+    df['RECEITA_POTENCIAL'] = df['CONSUMO_ACUMULADO'] * tarifa_media
+    df['PERDA_ESTIMADA'] = df['RECEITA_POTENCIAL'] - df['RECEITA_ACUMULADA']
+    
     df['FLAG_SUSPEITA'] = np.where(
-        (
-            df['CONSUMO_ACUMULADO'] >
-            df['CONSUMO_ACUMULADO'].quantile(0.75)
-        ) &
-        (
-            df['TICKET_MEDIO_M3'] <
-            df['TICKET_MEDIO_M3'].quantile(0.25)
-        ),
-        'SUSPEITO',
-        'NORMAL'
+        (df['CONSUMO_ACUMULADO'] > df['CONSUMO_ACUMULADO'].quantile(0.75)) &
+        (df['TICKET_MEDIO_M3'] < df['TICKET_MEDIO_M3'].quantile(0.25)),
+        'SUSPEITO', 'NORMAL'
     )
-
-    # STATUS HIDRÔMETRO
-
+    
     df['STATUS_HIDROMETRO'] = np.where(
-        df['IDADE_HIDROMETRO'] < 5,
-        'DENTRO DA VIDA UTIL',
-        np.where(
-            df['IDADE_HIDROMETRO'] < 7,
-            'PROXIMO DO VENCIMENTO',
-            'SUBSTITUICAO RECOMENDADA'
-        )
+        df['IDADE_HIDROMETRO'] < 5, 'DENTRO DA VIDA UTIL',
+        np.where(df['IDADE_HIDROMETRO'] < 7, 'PROXIMO DO VENCIMENTO', 
+                 'SUBSTITUICAO RECOMENDADA')
     )
-
+    
     return df
 
 df = carregar_dados()
@@ -233,9 +165,7 @@ df = carregar_dados()
 # =========================================================
 # SIDEBAR
 # =========================================================
-
 st.sidebar.markdown("## Menu")
-
 pagina = st.sidebar.radio(
     "",
     [
@@ -248,17 +178,14 @@ pagina = st.sidebar.radio(
 )
 
 # =========================================================
-# HEADER
+# HEADER (Ícone + Título)
 # =========================================================
-
-col1, col2 = st.columns([1, 10])
-
+col1, col2, col3 = st.columns([1, 8, 1])
 with col1:
     st.image(
         "https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/assets/icone.png",
-        width=80
+        width=90
     )
-
 with col2:
     st.markdown("""
     <div class="titulo-dashboard">
@@ -269,68 +196,20 @@ with col2:
 # =========================================================
 # VISÃO GERAL
 # =========================================================
-
 if pagina == "🏠 Visão Geral":
-
     receita_acumulada = df['RECEITA_ACUMULADA'].sum()
+    perda_estimada = df['PERDA_ESTIMADA'].clip(lower=0).sum()
+    ligacoes_suspeitas = (df['FLAG_SUSPEITA'] == 'SUSPEITO').sum()
+    hidrometros_criticos = (df['STATUS_HIDROMETRO'] == 'SUBSTITUICAO RECOMENDADA').sum()
+    receita_potencial = df['RECEITA_POTENCIAL'].sum()
 
-    perda_estimada = (
-        df['PERDA_ESTIMADA']
-        .clip(lower=0)
-        .sum()
-    )
-
-    ligacoes_suspeitas = (
-        df['FLAG_SUSPEITA'] == 'SUSPEITO'
-    ).sum()
-
-    hidrometros_criticos = (
-        df['STATUS_HIDROMETRO'] ==
-        'SUBSTITUICAO RECOMENDADA'
-    ).sum()
-
-    receita_potencial = (
-        df['RECEITA_POTENCIAL']
-        .sum()
-    )
-
-    st.markdown(
-        '<div class="grafico-container">',
-        unsafe_allow_html=True
-    )
-
+    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     c1, c2, c3, c4, c5 = st.columns(5)
-
-    with c1:
-        st.metric(
-            "Receita Acumulada",
-            f"R$ {receita_acumulada:,.2f}"
-        )
-
-    with c2:
-        st.metric(
-            "Perda Estimada",
-            f"R$ {perda_estimada:,.2f}"
-        )
-
-    with c3:
-        st.metric(
-            "Ligações Suspeitas",
-            f"{ligacoes_suspeitas}"
-        )
-
-    with c4:
-        st.metric(
-            "Hidrômetros Críticos",
-            f"{hidrometros_criticos}"
-        )
-
-    with c5:
-        st.metric(
-            "Receita Potencial",
-            f"R$ {receita_potencial:,.2f}"
-        )
-
+    with c1: st.metric("Receita Acumulada", f"R$ {receita_acumulada:,.2f}")
+    with c2: st.metric("Perda Estimada", f"R$ {perda_estimada:,.2f}")
+    with c3: st.metric("Ligações Suspeitas", f"{ligacoes_suspeitas}")
+    with c4: st.metric("Hidrômetros Críticos", f"{hidrometros_criticos}")
+    with c5: st.metric("Receita Potencial", f"R$ {receita_potencial:,.2f}")
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
@@ -342,24 +221,14 @@ if pagina == "🏠 Visão Geral":
 # =========================================================
 # PERDAS COMERCIAIS
 # =========================================================
-
 elif pagina == "💰 Perdas Comerciais":
-
     fig = px.histogram(
-        df,
-        x='RECEITA_ACUMULADA',
-        nbins=50,
+        df, x='RECEITA_ACUMULADA', nbins=50,
         title='Distribuição da Receita Acumulada',
         template='plotly_white'
     )
-
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
+    st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
@@ -371,25 +240,15 @@ elif pagina == "💰 Perdas Comerciais":
 # =========================================================
 # ANOMALIAS
 # =========================================================
-
 elif pagina == "🚨 Anomalias":
-
     fig = px.scatter(
-        df,
-        x='CONSUMO_ACUMULADO',
-        y='RECEITA_ACUMULADA',
+        df, x='CONSUMO_ACUMULADO', y='RECEITA_ACUMULADA',
         color='FLAG_SUSPEITA',
         title='Detecção de Comportamentos Atípicos',
         template='plotly_white'
     )
-
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
+    st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
@@ -401,26 +260,13 @@ elif pagina == "🚨 Anomalias":
 # =========================================================
 # PARQUE HIDRÔMETROS
 # =========================================================
-
 elif pagina == "💧 Parque de Hidrômetros":
-
-    status_hidrometro = (
-        df['STATUS_HIDROMETRO']
-        .value_counts()
-        .reset_index()
-    )
-
-    status_hidrometro.columns = [
-        'STATUS',
-        'QUANTIDADE'
-    ]
-
+    status_hidrometro = df['STATUS_HIDROMETRO'].value_counts().reset_index()
+    status_hidrometro.columns = ['STATUS', 'QUANTIDADE']
+    
     fig = px.bar(
-        status_hidrometro,
-        x='STATUS',
-        y='QUANTIDADE',
-        color='STATUS',
-        text='QUANTIDADE',
+        status_hidrometro, x='STATUS', y='QUANTIDADE',
+        color='STATUS', text='QUANTIDADE',
         title='Situação Operacional dos Hidrômetros',
         template='plotly_white',
         color_discrete_map={
@@ -429,14 +275,8 @@ elif pagina == "💧 Parque de Hidrômetros":
             'SUBSTITUICAO RECOMENDADA': 'red'
         }
     )
-
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
+    st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
@@ -448,23 +288,12 @@ elif pagina == "💧 Parque de Hidrômetros":
 # =========================================================
 # RECOMENDAÇÕES
 # =========================================================
-
 elif pagina == "📈 Recomendações":
-
-    dados_linha = (
-        df.groupby(
-            ['IDADE_HIDROMETRO', 'STATUS_HIDROMETRO']
-        )['PERDA_ESTIMADA']
-        .sum()
-        .reset_index()
-    )
-
+    dados_linha = df.groupby(['IDADE_HIDROMETRO', 'STATUS_HIDROMETRO'])['PERDA_ESTIMADA'].sum().reset_index()
+    
     fig = px.line(
-        dados_linha,
-        x='IDADE_HIDROMETRO',
-        y='PERDA_ESTIMADA',
-        color='STATUS_HIDROMETRO',
-        markers=True,
+        dados_linha, x='IDADE_HIDROMETRO', y='PERDA_ESTIMADA',
+        color='STATUS_HIDROMETRO', markers=True,
         template='plotly_white',
         title='Perdas Comerciais Associadas ao Envelhecimento dos Hidrômetros',
         color_discrete_map={
@@ -473,14 +302,8 @@ elif pagina == "📈 Recomendações":
             'SUBSTITUICAO RECOMENDADA': 'red'
         }
     )
-
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
+    st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
@@ -492,7 +315,6 @@ elif pagina == "📈 Recomendações":
 # =========================================================
 # RODAPÉ
 # =========================================================
-
 st.markdown("""
 <div class="rodape">
 @ Elisângela de Souza | Sistema Comercial de Água e Esgoto | 2026
