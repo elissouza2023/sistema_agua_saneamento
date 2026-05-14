@@ -92,7 +92,7 @@ st.markdown("""
         color: #ffffff !important;
         opacity: 1 !important;
         visibility: visible !important;
-        text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
+        text-shadow: 1px 1px 5px rgba(0,0,0,0.6);
         font-weight: 600 !important;
         font-size: 13px !important;
     }
