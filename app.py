@@ -50,10 +50,21 @@ st.markdown("""
     }
 
     .grafico-container {
-        background-color: rgba(49, 81, 82, 0.85);
+        background-color: rgba(49, 81, 82, 0.88);
         padding: 25px;
         border-radius: 20px;
         margin-top: 15px;
+        margin-bottom: 10px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .kpi-container {
+        background-color: rgba(49, 81, 82, 0.88);
+        padding: 25px 20px;
+        border-radius: 20px;
+        margin-top: 15px;
+        margin-bottom: 10px;
         backdrop-filter: blur(8px);
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
@@ -65,7 +76,7 @@ st.markdown("""
         border-radius: 20px;
         color: white;
         font-size: 16px;
-        margin-top: 20px;
+        margin-top: 15px;
     }
 
     .rodape {
@@ -97,8 +108,7 @@ st.markdown("""
 def carregar_dados():
     url = "https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/data/dados_micromedicao.xls"
     df = pd.read_excel(url)
-    
-    # PADRONIZAÇÃO
+   
     df.columns = (
         df.columns
         .str.strip()
@@ -110,54 +120,50 @@ def carregar_dados():
         .str.replace('Ã', 'A')
         .str.replace('Á', 'A')
     )
-    
-    # LIMPEZA
+   
     df = df[df['SIT_LIG_AGUA'].notna()]
     colunas_numericas = df.select_dtypes(include=['float64', 'int64']).columns
     df[colunas_numericas] = df[colunas_numericas].fillna(0)
     df['CATEGORIA_PRINCIPAL'] = df['CATEGORIA_PRINCIPAL'].fillna('NAO INFORMADO')
-    
+   
     df['DATA_INSTALACAO_HIDROMETRO'] = pd.to_datetime(
         df['DATA_INSTALACAO_HIDROMETRO'], errors='coerce'
     )
-    
-    # ENGENHARIA DE ATRIBUTOS
+   
     colunas_consumo = [col for col in df.columns if 'VOLUME_FATURADO_' in col]
     colunas_receita = [col for col in df.columns if 'VALOR_TOTAL_' in col]
-    
+   
     df['CONSUMO_ACUMULADO'] = df[colunas_consumo].sum(axis=1)
     df['RECEITA_ACUMULADA'] = df[colunas_receita].sum(axis=1)
     df['CONSUMO_MEDIO'] = df[colunas_consumo].mean(axis=1)
     df['RECEITA_MEDIA'] = df[colunas_receita].mean(axis=1)
-    
+   
     df['IDADE_HIDROMETRO'] = (
-        pd.Timestamp.today().year - 
-        df['DATA_INSTALACAO_HIDROMETRO'].dt.year
+        pd.Timestamp.today().year - df['DATA_INSTALACAO_HIDROMETRO'].dt.year
     )
-    
+   
     df['TICKET_MEDIO_M3'] = np.where(
         df['CONSUMO_ACUMULADO'] > 0,
         df['RECEITA_ACUMULADA'] / df['CONSUMO_ACUMULADO'],
         0
     )
-    
+   
     tarifa_media = df['RECEITA_ACUMULADA'].sum() / df['CONSUMO_ACUMULADO'].sum()
-    
+   
     df['RECEITA_POTENCIAL'] = df['CONSUMO_ACUMULADO'] * tarifa_media
     df['PERDA_ESTIMADA'] = df['RECEITA_POTENCIAL'] - df['RECEITA_ACUMULADA']
-    
+   
     df['FLAG_SUSPEITA'] = np.where(
         (df['CONSUMO_ACUMULADO'] > df['CONSUMO_ACUMULADO'].quantile(0.75)) &
         (df['TICKET_MEDIO_M3'] < df['TICKET_MEDIO_M3'].quantile(0.25)),
         'SUSPEITO', 'NORMAL'
     )
-    
+   
     df['STATUS_HIDROMETRO'] = np.where(
         df['IDADE_HIDROMETRO'] < 5, 'DENTRO DA VIDA UTIL',
-        np.where(df['IDADE_HIDROMETRO'] < 7, 'PROXIMO DO VENCIMENTO', 
-                 'SUBSTITUICAO RECOMENDADA')
+        np.where(df['IDADE_HIDROMETRO'] < 7, 'PROXIMO DO VENCIMENTO', 'SUBSTITUICAO RECOMENDADA')
     )
-    
+   
     return df
 
 df = carregar_dados()
@@ -178,7 +184,7 @@ pagina = st.sidebar.radio(
 )
 
 # =========================================================
-# HEADER (Ícone + Título)
+# HEADER
 # =========================================================
 col1, col2, col3 = st.columns([1, 8, 1])
 with col1:
@@ -194,7 +200,7 @@ with col2:
     """, unsafe_allow_html=True)
 
 # =========================================================
-# VISÃO GERAL
+# VISÃO GERAL - KPI CONTAINER CORRIGIDO
 # =========================================================
 if pagina == "🏠 Visão Geral":
     receita_acumulada = df['RECEITA_ACUMULADA'].sum()
@@ -203,121 +209,70 @@ if pagina == "🏠 Visão Geral":
     hidrometros_criticos = (df['STATUS_HIDROMETRO'] == 'SUBSTITUICAO RECOMENDADA').sum()
     receita_potencial = df['RECEITA_POTENCIAL'].sum()
 
-    # Container dos KPIs - estilo mais próximo do Figma
-    st.markdown('<div class="grafico-container" style="padding: 20px 15px 25px 15px;">', unsafe_allow_html=True)
-    
-    c1, c2, c3, c4, c5 = st.columns(5, gap="small")
-    with c1:
-        st.metric("Receita Acumulada", f"R$ {receita_acumulada:,.2f}")
-    with c2:
-        st.metric("Perda Estimada", f"R$ {perda_estimada:,.2f}")
-    with c3:
-        st.metric("Ligações Suspeitas", f"{ligacoes_suspeitas}")
-    with c4:
-        st.metric("Hidrômetros Críticos", f"{hidrometros_criticos}")
-    with c5:
-        st.metric("Receita Potencial", f"R$ {receita_potencial:,.2f}")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Container específico para os KPIs
+    with st.container():
+        st.markdown('<div class="kpi-container">', unsafe_allow_html=True)
+        
+        c1, c2, c3, c4, c5 = st.columns(5, gap="small")
+        with c1:
+            st.metric("Receita Acumulada", f"R$ {receita_acumulada:,.2f}")
+        with c2:
+            st.metric("Perda Estimada", f"R$ {perda_estimada:,.2f}")
+        with c3:
+            st.metric("Ligações Suspeitas", f"{ligacoes_suspeitas}")
+        with c4:
+            st.metric("Hidrômetros Críticos", f"{hidrometros_criticos}")
+        with c5:
+            st.metric("Receita Potencial", f"R$ {receita_potencial:,.2f}")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
     <div class="insight-container">
     Visão Geral de KPIs estratégicos visando identificação de oportunidades de recuperação de receitas e detecção de fraudes e inconsistências.
     </div>
     """, unsafe_allow_html=True)
+
 # =========================================================
-# PERDAS COMERCIAIS
+# OUTRAS PÁGINAS (mantidas iguais)
 # =========================================================
 elif pagina == "💰 Perdas Comerciais":
-    fig = px.histogram(
-        df, x='RECEITA_ACUMULADA', nbins=50,
-        title='Distribuição da Receita Acumulada',
-        template='plotly_white'
-    )
+    fig = px.histogram(df, x='RECEITA_ACUMULADA', nbins=50,
+                       title='Distribuição da Receita Acumulada', template='plotly_white')
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""<div class="insight-container">Os dados indicam crescimento progressivo da perda estimada em hidrômetros próximos ou acima da vida útil recomendada.</div>""", unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="insight-container">
-    Os dados indicam crescimento progressivo da perda estimada em hidrômetros próximos ou acima da vida útil recomendada.
-    </div>
-    """, unsafe_allow_html=True)
-
-# =========================================================
-# ANOMALIAS
-# =========================================================
 elif pagina == "🚨 Anomalias":
-    fig = px.scatter(
-        df, x='CONSUMO_ACUMULADO', y='RECEITA_ACUMULADA',
-        color='FLAG_SUSPEITA',
-        title='Detecção de Comportamentos Atípicos',
-        template='plotly_white'
-    )
+    fig = px.scatter(df, x='CONSUMO_ACUMULADO', y='RECEITA_ACUMULADA', color='FLAG_SUSPEITA',
+                     title='Detecção de Comportamentos Atípicos', template='plotly_white')
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""<div class="insight-container">Ligações com comportamento atípico e potencial necessidade de análise comercial.</div>""", unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="insight-container">
-    Ligações com comportamento atípico e potencial necessidade de análise comercial.
-    </div>
-    """, unsafe_allow_html=True)
-
-# =========================================================
-# PARQUE HIDRÔMETROS
-# =========================================================
 elif pagina == "💧 Parque de Hidrômetros":
     status_hidrometro = df['STATUS_HIDROMETRO'].value_counts().reset_index()
     status_hidrometro.columns = ['STATUS', 'QUANTIDADE']
-    
-    fig = px.bar(
-        status_hidrometro, x='STATUS', y='QUANTIDADE',
-        color='STATUS', text='QUANTIDADE',
-        title='Situação Operacional dos Hidrômetros',
-        template='plotly_white',
-        color_discrete_map={
-            'DENTRO DA VIDA UTIL': 'green',
-            'PROXIMO DO VENCIMENTO': 'yellow',
-            'SUBSTITUICAO RECOMENDADA': 'red'
-        }
-    )
+    fig = px.bar(status_hidrometro, x='STATUS', y='QUANTIDADE', color='STATUS', text='QUANTIDADE',
+                 title='Situação Operacional dos Hidrômetros', template='plotly_white',
+                 color_discrete_map={'DENTRO DA VIDA UTIL': 'green','PROXIMO DO VENCIMENTO': 'yellow','SUBSTITUICAO RECOMENDADA': 'red'})
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""<div class="insight-container">Foi identificado percentual relevante de hidrômetros acima da vida útil recomendada pela Portaria 155/2022.</div>""", unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="insight-container">
-    Foi identificado percentual relevante de hidrômetros acima da vida útil recomendada pela Portaria 155/2022.
-    </div>
-    """, unsafe_allow_html=True)
-
-# =========================================================
-# RECOMENDAÇÕES
-# =========================================================
 elif pagina == "📈 Recomendações":
     dados_linha = df.groupby(['IDADE_HIDROMETRO', 'STATUS_HIDROMETRO'])['PERDA_ESTIMADA'].sum().reset_index()
-    
-    fig = px.line(
-        dados_linha, x='IDADE_HIDROMETRO', y='PERDA_ESTIMADA',
-        color='STATUS_HIDROMETRO', markers=True,
-        template='plotly_white',
-        title='Perdas Comerciais Associadas ao Envelhecimento dos Hidrômetros',
-        color_discrete_map={
-            'DENTRO DA VIDA UTIL': 'green',
-            'PROXIMO DO VENCIMENTO': 'yellow',
-            'SUBSTITUICAO RECOMENDADA': 'red'
-        }
-    )
+    fig = px.line(dados_linha, x='IDADE_HIDROMETRO', y='PERDA_ESTIMADA', color='STATUS_HIDROMETRO',
+                  markers=True, template='plotly_white',
+                  title='Perdas Comerciais Associadas ao Envelhecimento dos Hidrômetros',
+                  color_discrete_map={'DENTRO DA VIDA UTIL': 'green','PROXIMO DO VENCIMENTO': 'yellow','SUBSTITUICAO RECOMENDADA': 'red'})
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="insight-container">
-    Com base nas análises realizadas, foram identificadas oportunidades relevantes de recuperação de receita associadas ao envelhecimento do parque de hidrômetros.
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("""<div class="insight-container">Com base nas análises realizadas, foram identificadas oportunidades relevantes de recuperação de receita associadas ao envelhecimento do parque de hidrômetros.</div>""", unsafe_allow_html=True)
 
 # =========================================================
 # RODAPÉ
