@@ -272,7 +272,8 @@ elif pagina == "📈 Recomendações":
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("""<div class="insight-container">Com base nas análises realizadas, foram identificadas oportunidades relevantes de recuperação de receita associadas ao envelhecimento do parque de hidrômetros.</div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="insight-container">Com base nas análises realizadas, foram identificadas oportunidades relevantes de recuperação de receita associadas principalmente ao envelhecimento do parque de hidrômetros, inconsistências entre consumo e faturamento e padrões atípicos de comportamento comercial. Os dados indicam que hidrômetros com idade superior à vida útil recomendada apresentam maior potencial de submedição e perdas financeiras, reforçando a necessidade de substituição preventiva e priorização operacional. Também foram identificadas ligações com elevado consumo acumulado e baixo ticket médio por metro cúbico, sinalizando possíveis inconsistências cadastrais, falhas de medição ou necessidade de inspeção comercial. Recomenda-se como ações prioritárias a substituição gradual dos hidrômetros críticos, a intensificação das fiscalizações em ligações classificadas como suspeitas e a implementação de monitoramento contínuo dos indicadores estratégicos apresentados no dashboard. As medidas propostas possuem potencial de aumento de faturamento, mitigação de perdas comerciais e melhoria da eficiência operacional, contribuindo diretamente para a sustentabilidade financeira da operação de saneamento.
+</div>""", unsafe_allow_html=True)
 
 # =========================================================
 # RODAPÉ
