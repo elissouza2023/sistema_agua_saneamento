@@ -82,20 +82,27 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.20);
     }
 
-    /* Rótulo da métrica — força branco em todos os textos do card */
-    [data-testid="metric-container"] *,
-    [data-testid="metric-container"] label,
-    [data-testid="metric-container"] p,
-    [data-testid="metric-container"] span,
-    [data-testid="metric-container"] div {
+    /* Rótulo da métrica — seletores máximos para sobrescrever o tema Streamlit */
+    [data-testid="metric-container"] [data-testid="stMetricLabel"],
+    [data-testid="metric-container"] [data-testid="stMetricLabel"] *,
+    [data-testid="metric-container"] [data-testid="stMetricLabel"] p,
+    [data-testid="metric-container"] [data-testid="stMetricLabel"] span,
+    [data-testid="metric-container"] [data-testid="stMetricLabel"] div,
+    [data-testid="metric-container"] [data-testid="stMetricLabel"] label {
         color: #ffffff !important;
-        text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+        opacity: 1 !important;
+        visibility: visible !important;
+        text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
+        font-weight: 600 !important;
+        font-size: 13px !important;
     }
 
     /* Valor principal da métrica — branco com sombra */
     [data-testid="stMetricValue"],
-    [data-testid="stMetricValue"] > div {
+    [data-testid="stMetricValue"] > div,
+    [data-testid="stMetricValue"] * {
         color: #ffffff !important;
+        opacity: 1 !important;
         font-weight: bold !important;
         text-shadow: 1px 1px 6px rgba(0,0,0,0.6);
     }
