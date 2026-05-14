@@ -24,25 +24,16 @@ st.markdown("""
         padding-right: 1rem;
     }
 
-    /* Estilo para o corpo principal do Streamlit */
-    .main {
+    .stApp {
         background-image: url("https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/assets/fundo.png");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
         background-repeat: no-repeat;
-        z-index: 0; /* Garante que o background fique atrás */
-    }
-
-    /* Garante que o conteúdo dentro do main fique acima do background */
-    .stApp > header, .stApp > div:first-child > div:nth-child(2) {
-        background-color: transparent; /* Garante que o fundo do container principal seja transparente */
-        z-index: 1; /* Coloca o conteúdo acima do background */
     }
 
     section[data-testid="stSidebar"] {
         background-color: rgba(57, 91, 94, 0.90) !important;
-        z-index: 2; /* Garante que a sidebar fique acima de tudo */
     }
     section[data-testid="stSidebar"] * {
         color: white !important;
@@ -67,8 +58,6 @@ st.markdown("""
         backdrop-filter: blur(10px);
         box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         border: 1px solid rgba(255,255,255,0.2);
-        z-index: 1; /* Garante que os KPIs fiquem acima do background */
-        position: relative; /* Necessário para z-index funcionar */
     }
 
     .grafico-container {
@@ -79,8 +68,6 @@ st.markdown("""
         margin-bottom: 10px;
         backdrop-filter: blur(8px);
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        z-index: 1; /* Garante que os gráficos fiquem acima do background */
-        position: relative; /* Necessário para z-index funcionar */
     }
 
     .insight-container {
@@ -91,8 +78,6 @@ st.markdown("""
         color: white;
         font-size: 16px;
         margin-top: 15px;
-        z-index: 1; /* Garante que os insights fiquem acima do background */
-        position: relative; /* Necessário para z-index funcionar */
     }
 
     .rodape {
@@ -103,8 +88,6 @@ st.markdown("""
         border-radius: 10px;
         margin-top: 40px;
         font-size: 14px;
-        z-index: 1; /* Garante que o rodapé fique acima do background */
-        position: relative; /* Necessário para z-index funcionar */
     }
 
     [data-testid="metric-container"] {
@@ -112,14 +95,10 @@ st.markdown("""
         border-radius: 18px;
         padding: 15px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        z-index: 1; /* Garante que as métricas fiquem acima do background */
-        position: relative; /* Necessário para z-index funcionar */
     }
 
     header[data-testid="stHeader"] {
         background-color: rgba(0,0,0,0.1) !important;
-        z-index: 1; /* Garante que o cabeçalho fique acima do background */
-        position: relative; /* Necessário para z-index funcionar */
     }
 </style>
 """, unsafe_allow_html=True)
