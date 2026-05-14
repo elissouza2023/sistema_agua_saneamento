@@ -82,12 +82,14 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.20);
     }
 
-    /* Rótulo da métrica — branco */
+    /* Rótulo da métrica — força branco em todos os textos do card */
+    [data-testid="metric-container"] *,
     [data-testid="metric-container"] label,
-    [data-testid="metric-container"] > div p {
-        color: rgba(255, 255, 255, 0.88) !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
+    [data-testid="metric-container"] p,
+    [data-testid="metric-container"] span,
+    [data-testid="metric-container"] div {
+        color: #ffffff !important;
+        text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
     }
 
     /* Valor principal da métrica — branco com sombra */
