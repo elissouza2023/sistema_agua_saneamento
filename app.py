@@ -242,7 +242,7 @@ elif pagina == "💰 Perdas Comerciais":
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("""<div class="insight-container">Os dados indicam crescimento progressivo da perda estimada em hidrômetros próximos ou acima da vida útil recomendada.</div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="insight-container">" Os dados indicam crescimento progressivo da perda estimada em hidrômetros próximos ou acima da vida útil recomendada. "</div>""", unsafe_allow_html=True)
 
 elif pagina == "🚨 Anomalias":
     fig = px.scatter(df, x='CONSUMO_ACUMULADO', y='RECEITA_ACUMULADA', color='FLAG_SUSPEITA',
@@ -250,7 +250,7 @@ elif pagina == "🚨 Anomalias":
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("""<div class="insight-container">Ligações com comportamento atípico e potencial necessidade de análise comercial.</div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="insight-container">" Ligações com comportamento atípico e potencial necessidade de análise comercial. "</div>""", unsafe_allow_html=True)
 
 elif pagina == "💧 Parque de Hidrômetros":
     status_hidrometro = df['STATUS_HIDROMETRO'].value_counts().reset_index()
@@ -261,7 +261,7 @@ elif pagina == "💧 Parque de Hidrômetros":
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("""<div class="insight-container">Foi identificado percentual relevante de hidrômetros acima da vida útil recomendada pela Portaria 155/2022.</div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="insight-container">" Foi identificado percentual relevante de hidrômetros acima da vida útil recomendada pela Portaria 155/2022. "</div>""", unsafe_allow_html=True)
 
 elif pagina == "📈 Recomendações":
     dados_linha = df.groupby(['IDADE_HIDROMETRO', 'STATUS_HIDROMETRO'])['PERDA_ESTIMADA'].sum().reset_index()
@@ -272,7 +272,7 @@ elif pagina == "📈 Recomendações":
     st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("""<div class="insight-container">Com base nas análises realizadas, foram identificadas oportunidades relevantes de recuperação de receita associadas principalmente ao envelhecimento do parque de hidrômetros, inconsistências entre consumo e faturamento e padrões atípicos de comportamento comercial. Os dados indicam que hidrômetros com idade superior à vida útil recomendada apresentam maior potencial de submedição e perdas financeiras, reforçando a necessidade de substituição preventiva e priorização operacional. Também foram identificadas ligações com elevado consumo acumulado e baixo ticket médio por metro cúbico, sinalizando possíveis inconsistências cadastrais, falhas de medição ou necessidade de inspeção comercial. Recomenda-se como ações prioritárias a substituição gradual dos hidrômetros críticos, a intensificação das fiscalizações em ligações classificadas como suspeitas e a implementação de monitoramento contínuo dos indicadores estratégicos apresentados no dashboard. As medidas propostas possuem potencial de aumento de faturamento, mitigação de perdas comerciais e melhoria da eficiência operacional, contribuindo diretamente para a sustentabilidade financeira da operação de saneamento.
+    st.markdown("""<div class="insight-container">"Com base nas análises realizadas, foram identificadas oportunidades relevantes de recuperação de receita associadas principalmente ao envelhecimento do parque de hidrômetros, inconsistências entre consumo e faturamento e padrões atípicos de comportamento comercial. Os dados indicam que hidrômetros com idade superior à vida útil recomendada apresentam maior potencial de submedição e perdas financeiras, reforçando a necessidade de substituição preventiva e priorização operacional. Também foram identificadas ligações com elevado consumo acumulado e baixo ticket médio por metro cúbico, sinalizando possíveis inconsistências cadastrais, falhas de medição ou necessidade de inspeção comercial. Recomenda-se como ações prioritárias a substituição gradual dos hidrômetros críticos, a intensificação das fiscalizações em ligações classificadas como suspeitas e a implementação de monitoramento contínuo dos indicadores estratégicos apresentados no dashboard. As medidas propostas possuem potencial de aumento de faturamento, mitigação de perdas comerciais e melhoria da eficiência operacional, contribuindo diretamente para a sustentabilidade financeira da operação de saneamento."
 </div>""", unsafe_allow_html=True)
 
 # =========================================================
