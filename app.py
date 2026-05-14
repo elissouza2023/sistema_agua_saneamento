@@ -19,7 +19,11 @@ st.set_page_config(
 st.markdown(
     f"""
     <style>
-
+[data-testid="metric-container"] {
+    background-color: rgba(255,255,255,0.92);
+    border-radius: 18px;
+    padding: 15px;
+}
     .stApp {{
         background-image: url("https://raw.githubusercontent.com/elissouza2023/sistema_agua_saneamento/main/assets/fundo.png");
         background-size: cover;
