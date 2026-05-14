@@ -53,7 +53,7 @@ st.markdown("""
         background-color: rgba(49, 81, 82, 0.85);
         padding: 25px;
         border-radius: 20px;
-        margin-top: 25px;
+        margin-top: 15px;
         backdrop-filter: blur(8px);
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
@@ -203,13 +203,21 @@ if pagina == "🏠 Visão Geral":
     hidrometros_criticos = (df['STATUS_HIDROMETRO'] == 'SUBSTITUICAO RECOMENDADA').sum()
     receita_potencial = df['RECEITA_POTENCIAL'].sum()
 
-    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
-    c1, c2, c3, c4, c5 = st.columns(5)
-    with c1: st.metric("Receita Acumulada", f"R$ {receita_acumulada:,.2f}")
-    with c2: st.metric("Perda Estimada", f"R$ {perda_estimada:,.2f}")
-    with c3: st.metric("Ligações Suspeitas", f"{ligacoes_suspeitas}")
-    with c4: st.metric("Hidrômetros Críticos", f"{hidrometros_criticos}")
-    with c5: st.metric("Receita Potencial", f"R$ {receita_potencial:,.2f}")
+    # Container dos KPIs - estilo mais próximo do Figma
+    st.markdown('<div class="grafico-container" style="padding: 20px 15px 25px 15px;">', unsafe_allow_html=True)
+    
+    c1, c2, c3, c4, c5 = st.columns(5, gap="small")
+    with c1:
+        st.metric("Receita Acumulada", f"R$ {receita_acumulada:,.2f}")
+    with c2:
+        st.metric("Perda Estimada", f"R$ {perda_estimada:,.2f}")
+    with c3:
+        st.metric("Ligações Suspeitas", f"{ligacoes_suspeitas}")
+    with c4:
+        st.metric("Hidrômetros Críticos", f"{hidrometros_criticos}")
+    with c5:
+        st.metric("Receita Potencial", f"R$ {receita_potencial:,.2f}")
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
@@ -217,7 +225,6 @@ if pagina == "🏠 Visão Geral":
     Visão Geral de KPIs estratégicos visando identificação de oportunidades de recuperação de receitas e detecção de fraudes e inconsistências.
     </div>
     """, unsafe_allow_html=True)
-
 # =========================================================
 # PERDAS COMERCIAIS
 # =========================================================
