@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# CSS CORRIGIDO
+# CSS
 # =========================================================
 st.markdown("""
 <style>
@@ -24,7 +24,7 @@ st.markdown("""
         padding-right: 1rem;
     }
 
-    /* Fundo aplicado apenas no pseudo-elemento, fica atrás de tudo */
+    /* Fundo fixo atrás de tudo via pseudo-elemento */
     .stApp::before {
         content: "";
         position: fixed;
@@ -36,7 +36,6 @@ st.markdown("""
         z-index: 0;
     }
 
-    /* Garante que o conteúdo fique acima do fundo */
     .stApp > * {
         position: relative;
         z-index: 1;
@@ -51,19 +50,21 @@ st.markdown("""
         color: white !important;
     }
 
+    /* Título sem container — flutua diretamente sobre a imagem de fundo */
     .titulo-dashboard {
         color: white;
         font-size: 42px;
         font-weight: bold;
         text-align: center;
-        text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+        text-shadow: 2px 2px 12px rgba(0,0,0,0.95), 0 0 30px rgba(0,0,0,0.7);
         margin-top: 0;
         padding-top: 10px;
+        background: none !important;
     }
 
-    /* Container dos KPIs via CSS nos elementos nativos do Streamlit */
-    div[data-testid="stHorizontalBlock"] {
-        background-color: rgba(49, 81, 82, 0.95);
+    /* KPIs — fundo aplicado SOMENTE no bloco que contém métricas (não no header) */
+    div[data-testid="stHorizontalBlock"]:has([data-testid="metric-container"]) {
+        background-color: rgba(49, 81, 82, 0.85);
         padding: 25px 20px;
         border-radius: 20px;
         margin-top: 15px;
@@ -73,43 +74,43 @@ st.markdown("""
         border: 1px solid rgba(255,255,255,0.2);
     }
 
-    /* Cards de métricas individuais */
+    /* Cards individuais de métrica: fundo translúcido, fonte BRANCA */
     [data-testid="metric-container"] {
-        background-color: rgba(255,255,255,0.98) !important;
-        border-radius: 18px;
-        padding: 15px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px;
+        padding: 14px !important;
+        border: 1px solid rgba(255, 255, 255, 0.20);
     }
 
-    [data-testid="metric-container"] label {
-        color: #395B5E !important;
-        font-weight: 600;
+    /* Rótulo da métrica — branco */
+    [data-testid="metric-container"] label,
+    [data-testid="metric-container"] > div p {
+        color: rgba(255, 255, 255, 0.88) !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
     }
 
-    [data-testid="metric-container"] [data-testid="stMetricValue"] {
-        color: #1a3a3b !important;
-        font-weight: bold;
+    /* Valor principal da métrica — branco com sombra */
+    [data-testid="stMetricValue"],
+    [data-testid="stMetricValue"] > div {
+        color: #ffffff !important;
+        font-weight: bold !important;
+        text-shadow: 1px 1px 6px rgba(0,0,0,0.6);
     }
 
-    /* Container dos gráficos — aplicado via classe customizada */
-    .grafico-container {
-        background-color: rgba(49, 81, 82, 0.92);
-        padding: 25px;
+    /* Gráficos diretos sobre o fundo — sem container extra,
+       fundo branco semi-opaco e borda arredondada no próprio chart */
+    div[data-testid="stPlotlyChart"] {
         border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.35);
         margin-top: 15px;
         margin-bottom: 10px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
-    /* Força o plotly chart a ficar dentro do container */
-    .grafico-container > div {
-        border-radius: 14px;
-        overflow: hidden;
-    }
-
+    /* Insight box */
     .insight-container {
-        background-color: rgba(49, 81, 82, 0.92);
+        background-color: rgba(49, 81, 82, 0.88);
         border-left: 8px solid #6499B9;
         padding: 20px;
         border-radius: 20px;
@@ -118,10 +119,12 @@ st.markdown("""
         margin-top: 15px;
         margin-bottom: 10px;
         line-height: 1.6;
+        backdrop-filter: blur(6px);
     }
 
+    /* Rodapé */
     .rodape {
-        background-color: #395B5E;
+        background-color: rgba(57, 91, 94, 0.90);
         color: white;
         text-align: center;
         padding: 15px;
@@ -131,7 +134,7 @@ st.markdown("""
     }
 
     header[data-testid="stHeader"] {
-        background-color: rgba(0,0,0,0.1) !important;
+        background-color: rgba(0,0,0,0.0) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -219,7 +222,7 @@ pagina = st.sidebar.radio(
 )
 
 # =========================================================
-# HEADER
+# HEADER — título flutua livre sobre a imagem, sem container
 # =========================================================
 col1, col2, col3 = st.columns([1, 8, 1])
 with col1:
@@ -244,9 +247,7 @@ if pagina == "🏠 Visão Geral":
     hidrometros_criticos = (df['STATUS_HIDROMETRO'] == 'SUBSTITUICAO RECOMENDADA').sum()
     receita_potencial = df['RECEITA_POTENCIAL'].sum()
 
-    # ✅ CORREÇÃO: os st.metric ficam DENTRO do st.columns,
-    # sem tentar envolvê-los com divs abertas/fechadas separadamente.
-    # O CSS acima aplica o fundo diretamente no stHorizontalBlock nativo.
+    # O CSS :has(metric-container) aplica o fundo verde apenas neste bloco
     c1, c2, c3, c4, c5 = st.columns(5, gap="small")
     with c1:
         st.metric("Receita Acumulada", f"R$ {receita_acumulada:,.2f}")
@@ -276,14 +277,11 @@ elif pagina == "💰 Perdas Comerciais":
         template='plotly_white'
     )
     fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(255,255,255,0.9)'
+        paper_bgcolor='rgba(255,255,255,0.93)',
+        plot_bgcolor='rgba(255,255,255,0.93)',
+        margin=dict(l=20, r=20, t=50, b=20)
     )
-    # ✅ CORREÇÃO: usar st.container() com border=True em vez de div aberta/fechada
-    with st.container(border=False):
-        st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("""
     <div class="insight-container">
@@ -304,12 +302,11 @@ elif pagina == "🚨 Anomalias":
         color_discrete_map={'SUSPEITO': '#e74c3c', 'NORMAL': '#2ecc71'}
     )
     fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(255,255,255,0.9)'
+        paper_bgcolor='rgba(255,255,255,0.93)',
+        plot_bgcolor='rgba(255,255,255,0.93)',
+        margin=dict(l=20, r=20, t=50, b=20)
     )
-    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
     <div class="insight-container">
@@ -335,12 +332,11 @@ elif pagina == "💧 Parque de Hidrômetros":
         }
     )
     fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(255,255,255,0.9)'
+        paper_bgcolor='rgba(255,255,255,0.93)',
+        plot_bgcolor='rgba(255,255,255,0.93)',
+        margin=dict(l=20, r=20, t=50, b=20)
     )
-    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
     <div class="insight-container">
@@ -369,12 +365,11 @@ elif pagina == "📈 Recomendações":
         }
     )
     fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(255,255,255,0.9)'
+        paper_bgcolor='rgba(255,255,255,0.93)',
+        plot_bgcolor='rgba(255,255,255,0.93)',
+        margin=dict(l=20, r=20, t=50, b=20)
     )
-    st.markdown('<div class="grafico-container">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
     <div class="insight-container">
